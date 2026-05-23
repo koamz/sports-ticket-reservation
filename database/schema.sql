@@ -219,3 +219,9 @@ CREATE TABLE basketball_details (
 
     FOREIGN KEY (ticket_id) REFERENCES tickets(id)
 );
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_phone ON users(phone);
+CREATE INDEX idx_matches_time ON matches(match_time);
+CREATE INDEX idx_tickets_price ON tickets(price);
+CREATE INDEX idx_reservations_user ON reservations(user_id);
+CREATE INDEX idx_payments_status ON payments(status);
