@@ -28,7 +28,6 @@ The repository structure is organized in a highly modular, decoupled fashion:
 sports-ticket-reservation
 ├── README.md                     # Project main documentation
 ├── docker-compose.yml            # Multi-container orchestration script
-├── requirements.txt              # Python testing dependencies
 │
 ├── backend/                      # Server-side Application (Node.js)
 │   ├── Dockerfile                # Docker build instructions for Backend
@@ -62,9 +61,10 @@ sports-ticket-reservation
 │   └── index.html                # Responsive web client UI (Tailwind CSS)
 │
 └── tests/                        # Database verification suite (Python)
-    └── db/
-        ├── conftest.py           # Database transaction testing fixtures
-        └── test_database.py      # 17 rigorous raw SQL testing cases
+    ├── db/
+    │   ├── conftest.py           # Database transaction testing fixtures
+    │   └── test_database.py      # 17 rigorous raw SQL testing cases
+    └── requirements.txt          # Python testing dependencies
 ```
 
 ---
