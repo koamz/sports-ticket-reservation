@@ -63,7 +63,7 @@ sports-ticket-reservation
 └── tests/                        # Database verification suite (Python)
     ├── db/
     │   ├── conftest.py           # Database transaction testing fixtures
-    │   └── test_database.py      # 17 rigorous raw SQL testing cases
+    │   └── test_database.py      # 33 rigorous raw SQL testing cases
     └── requirements.txt          # Python testing dependencies
 ```
 
