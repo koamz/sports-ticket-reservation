@@ -1,13 +1,9 @@
--- ==========================================
--- بروزرسانی توابع دیتابیس بر اساس مدل داده‌ای جدید
--- ==========================================
-
--- ۱. با دریافت ایمیل یا شماره تلفن، لیست بلیط‌های خریداری‌شده توسط کاربر را به ترتیب زمان خرید نمایش دهید.
+-- ۱. لیست بلیط‌های خریداری‌شده توسط کاربر
 CREATE OR REPLACE FUNCTION get_user_purchased_tickets(u_contact VARCHAR)
 RETURNS TABLE(ticket_id INT, home_team VARCHAR, away_team VARCHAR, price DECIMAL, purchase_time TIMESTAMP) AS $$
 BEGIN
     RETURN QUERY
-    SELECT t.id, h.name, a.name, t.price, r.reserved_at
+    SELECT t.id, h.name_en, a.name_en, t.price, r.reserved_at
     FROM users u
     JOIN reservations r ON u.id = r.user_id
     JOIN tickets t ON r.ticket_id = t.id
@@ -19,7 +15,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ۲. با دریافت ایمیل یا شماره تلفن پشتیبان، نام کاربرانی که حداقل یک‌بار رزرو آن‌ها لغو شده را لیست کنید.
+-- ۲. نام کاربرانی که حداقل یک‌بار رزرو آن‌ها توسط پشتیبان لغو شده
 CREATE OR REPLACE FUNCTION get_cancelled_users_by_support(s_contact VARCHAR)
 RETURNS TABLE(user_first_name VARCHAR, user_last_name VARCHAR) AS $$
 BEGIN
@@ -32,15 +28,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ۳. با دریافت نام شهر، لیست بلیط‌های خریداری‌شده در آن شهر را نمایش دهید.
+-- ۳. دریافت نام شهر و نمایش بلیط‌های خریداری شده در آن
 CREATE OR REPLACE FUNCTION get_tickets_purchased_in_city(c_name VARCHAR)
 RETURNS TABLE(ticket_id INT, buyer_name TEXT, match_desc TEXT, venue_name VARCHAR) AS $$
 BEGIN
     RETURN QUERY
     SELECT t.id, 
            (u.first_name || ' ' || u.last_name)::text, 
-           (h.name || ' vs ' || a.name)::text, 
-           v.name
+           (h.name_en || ' vs ' || a.name_en)::text, 
+           v.name_en
     FROM cities c
     JOIN venues v ON c.id = v.city_id
     JOIN matches m ON v.id = m.venue_id
@@ -49,20 +45,20 @@ BEGIN
     JOIN tickets t ON m.id = t.match_id
     JOIN reservations r ON t.id = r.ticket_id
     JOIN users u ON r.user_id = u.id
-    WHERE c.name = c_name AND r.status = 'paid';
+    WHERE (c.name_en = c_name OR c.name_fa = c_name) AND r.status = 'paid';
 END;
 $$ LANGUAGE plpgsql;
 
--- ۴. عبارتی را از ورودی گرفته و بلیط‌هایی را که آن عبارت در نام تماشاگر، نام تیم‌ها، محل برگزاری یا رده بلیط آمده باشد را برگردانید.
+-- ۴. موتور جستجوی متنی بلیط‌ها
 CREATE OR REPLACE FUNCTION search_tickets(search_term VARCHAR)
 RETURNS TABLE(ticket_id INT, visitor_name TEXT, match_title TEXT, venue_name VARCHAR, category_name VARCHAR) AS $$
 BEGIN
     RETURN QUERY
     SELECT t.id,
            (u.first_name || ' ' || u.last_name)::text,
-           (h.name || ' - ' || a.name)::text,
-           v.name,
-           tc.name
+           (h.name_en || ' - ' || a.name_en)::text,
+           v.name_en,
+           tc.name_en
     FROM tickets t
     JOIN matches m ON t.match_id = m.id
     JOIN teams h ON m.home_team_id = h.id
@@ -73,14 +69,14 @@ BEGIN
     LEFT JOIN users u ON r.user_id = u.id
     WHERE (u.first_name ILIKE '%' || search_term || '%')
        OR (u.last_name ILIKE '%' || search_term || '%')
-       OR (h.name ILIKE '%' || search_term || '%')
-       OR (a.name ILIKE '%' || search_term || '%')
-       OR (v.name ILIKE '%' || search_term || '%')
-       OR (tc.name ILIKE '%' || search_term || '%');
+       OR (h.name_en ILIKE '%' || search_term || '%')
+       OR (a.name_en ILIKE '%' || search_term || '%')
+       OR (v.name_en ILIKE '%' || search_term || '%')
+       OR (tc.name_en ILIKE '%' || search_term || '%');
 END;
 $$ LANGUAGE plpgsql;
 
--- ۵. شماره تلفن یا ایمیل کاربر را دریافت کرده و اطلاعات سایر کاربران همشهری او را نمایش دهید.
+-- ۵. اطلاعات کاربران همشهری
 CREATE OR REPLACE FUNCTION get_fellow_citizens(u_contact VARCHAR)
 RETURNS TABLE(first_name VARCHAR, last_name VARCHAR, email VARCHAR, phone VARCHAR) AS $$
 BEGIN
@@ -92,7 +88,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ۶. تاریخ و تعداد را به‌عنوان ورودی دریافت کرده و لیست n کاربری که از آن تاریخ به بعد بیشترین خرید بلیط را داشته‌اند نمایش دهید.
+-- ۶. دریافت تاریخ و نمایش n خریدار برتر از آن تاریخ به بعد
 CREATE OR REPLACE FUNCTION get_top_buyers_since(start_date TIMESTAMP, limit_n INT)
 RETURNS TABLE(user_id INT, first_name VARCHAR, last_name VARCHAR, total_purchased BIGINT) AS $$
 BEGIN
@@ -107,24 +103,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ۷. با دریافت نوع مسابقه ورزشی، لیست بلیط‌های کنسل‌شده مربوط به آن را به ترتیب تاریخ نمایش دهید.
+-- ۷. صندلی‌های کنسل شده به تفکیک نوع مسابقه
 CREATE OR REPLACE FUNCTION get_cancelled_tickets_by_sport(s_type VARCHAR)
 RETURNS TABLE(ticket_id INT, match_title TEXT, original_price DECIMAL, match_date TIMESTAMP) AS $$
 BEGIN
     RETURN QUERY
-    SELECT t.id, (h.name || ' vs ' || a.name)::text, t.price, m.match_time
+    SELECT t.id, (h.name_en || ' vs ' || a.name_en)::text, t.price, m.match_time
     FROM tickets t
     JOIN matches m ON t.match_id = m.id
     JOIN sports s ON m.sport_id = s.id
     JOIN teams h ON m.home_team_id = h.id
     JOIN teams a ON m.away_team_id = a.id
     JOIN reservations r ON t.id = r.ticket_id
-    WHERE s.name = s_type AND r.status = 'cancelled'
+    WHERE (s.name_en = s_type OR s.name_fa = s_type) AND r.status = 'cancelled'
     ORDER BY m.match_time ASC;
 END;
 $$ LANGUAGE plpgsql;
 
--- ۸. با دریافت موضوع گزارش، لیست کاربرانی که بیشترین گزارش در آن موضوع دارند را نمایش دهید.
+-- ۸. دریافت کاربران با بیشترین گزارش روی یک موضوع خاص
 CREATE OR REPLACE FUNCTION get_users_with_most_reports_by_subject(rep_subject VARCHAR)
 RETURNS TABLE(user_id INT, first_name VARCHAR, last_name VARCHAR, report_count BIGINT) AS $$
 BEGIN
