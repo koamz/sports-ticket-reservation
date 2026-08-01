@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سامانه جامع رزرو بلیط مسابقات ورزشی</title>
+  <!-- بارگذاری فریم‌ورک قدرتمند Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Vazirmatn', sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <!-- هدر اصلی برنامه -->
+  <header class="bg-blue-600 text-white shadow-md sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <h1 class="text-xl font-bold tracking-tight">سامانه ملی رزرواسیون مسابقات ورزشی</h1>
+      <div id="nav-auth-section" class="flex gap-2">
+        <!-- به صورت پویا با جاوااسکریپت آپدیت می‌شود -->
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-6 max-w-6xl">
+    
+    <!-- بخش اول: موتور جستجوی هوشمند متصل به الاستیک‌سرچ -->
+    <section class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-lg font-bold mb-4 text-blue-600">جستجوی پیشرفته مسابقات (ElasticSearch)</h2>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="relative">
+          <input type="text" id="search-input" placeholder="نام تیم یا ورزشگاه را تایپ کنید..." class="border rounded p-2 w-full text-sm" oninput="handleAutocomplete(this.value)">
+          <div id="autocomplete-box" class="absolute bg-white border rounded shadow w-full mt-1 hidden z-10 max-h-48 overflow-y-auto"></div>
+        </div>
+        <select id="filter-sport" class="border rounded p-2 text-sm">
+          <option value="">نوع ورزش</option>
+          <option value="Football">فوتبال</option>
+          <option value="Volleyball">والیبال</option>
+          <option value="Basketball">بسکتبال</option>
+        </select>
+        <select id="filter-city" class="border rounded p-2 text-sm">
+          <option value="">شهر برگزاری</option>
+          <option value="Tehran">تهران</option>
+          <option value="Isfahan">اصفهان</option>
+          <option value="Shiraz">شیراز</option>
+        </select>
+        <button onclick="performSearch()" class="bg-blue-600 hover:bg-blue-700 text-white rounded p-2 text-sm font-bold">اعمال فیلترها</button>
+      </div>
+    </section>
+
+    <!-- بخش دوم: نمایش لیست بلیط‌های موجود الاستیک -->
+    <section>
+      <h2 class="text-lg font-bold mb-4">مسابقات ورزشی در دسترس</h2>
+      <div id="tickets-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- دیتای بلیط‌ها در اینجا رندر می‌شود -->
+      </div>
+    </section>
+
+    <!-- بخش سوم: داشبورد کاربر (پس از لاگین نمایان می‌شود) -->
+    <section id="dashboard-section" class="bg-white rounded-lg shadow p-6 mt-8 hidden">
+      <h2 class="text-lg font-bold mb-4 text-green-600">داشبورد و تاریخچه خریدهای من</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-right border-collapse text-sm">
+          <thead>
+            <tr class="bg-gray-100">
+              <th class="p-3 border">شناسه رزرو</th>
+              <th class="p-3 border">مسابقه</th>
+              <th class="p-3 border">قیمت پرداختی</th>
+              <th class="p-3 border">وضعیت نهایی</th>
+              <th class="p-3 border">عملیات</th>
+            </tr>
+          </thead>
+          <tbody id="bookings-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- مدال ورود و ثبت‌نام با OTP -->
+  <div id="auth-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg p-6 w-96 shadow-lg">
+      <h3 class="text-lg font-bold mb-4 text-center">ورود سریع با رمز یکبار مصرف (OTP)</h3>
+      <div id="otp-request-step">
+        <label class="block text-sm mb-2">ایمیل یا شماره تلفن خود را وارد کنید:</label>
+        <input type="text" id="auth-contact" class="border rounded p-2 w-full mb-4 text-sm" placeholder="ali@gmail.com">
+        <button onclick="requestOTP()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded p-2 text-sm font-bold">ارسال کد تایید</button>
+      </div>
+      <div id="otp-verify-step" class="hidden">
+        <label class="block text-sm mb-2">کد ۶ رقمی ارسال شده را وارد کنید:</label>
+        <input type="text" id="auth-code" class="border rounded p-2 w-full mb-4 text-sm text-center tracking-widest" placeholder="123456">
+        <button onclick="verifyOTP()" class="w-full bg-green-600 hover:bg-green-700 text-white rounded p-2 text-sm font-bold">تایید و ورود به سامانه</button>
+      </div>
+      <button onclick="closeAuthModal()" class="w-full mt-4 text-gray-500 text-xs hover:underline">انصراف</button>
+    </div>
+  </div>
+
+  <!-- منطق‌های وب کلاینت متصل به وب سرویس -->
+  <script>
+    const API_BASE = 'http://localhost:3000/api';
+    let userToken = localStorage.getItem('token') || null;
+
+    async function checkUserSession() {
+      const navSection = document.getElementById('nav-auth-section');
+      const dbSection = document.getElementById('dashboard-section');
+      if (userToken) {
+        try {
+          const res = await fetch(`${API_BASE}/user/profile`, {
+            headers: { 'Authorization': `Bearer ${userToken}` }
+          });
+          if (res.status === 200) {
+            const user = await res.json();
+            navSection.innerHTML = `
+              <span class="text-sm font-bold self-center">خوش آمدید، ${user.first_name} ${user.last_name}</span>
+              <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded">خروج</button>
+            `;
+            dbSection.classList.remove('hidden');
+            loadBookings();
+            return;
+          }
+        } catch(e) {}
+        logout();
+      }
+      navSection.innerHTML = `<button onclick="openAuthModal()" class="bg-green-500 hover:bg-green-600 text-white text-sm px-4 py-2 rounded font-bold">ورود / ثبت‌نام</button>`;
+      dbSection.classList.add('hidden');
+    }
+
+    function openAuthModal() {
+      document.getElementById('auth-modal').classList.remove('hidden');
+    }
+    function closeAuthModal() {
+      document.getElementById('auth-modal').classList.add('hidden');
+    }
+    function logout() {
+      localStorage.removeItem('token');
+      userToken = null;
+      checkUserSession();
+    }
+
+    async function requestOTP() {
+      const contact = document.getElementById('auth-contact').value;
+      const res = await fetch(`${API_BASE}/auth/otp/request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contact })
+      });
+      if (res.ok) {
+        document.getElementById('otp-request-step').classList.add('hidden');
+        document.getElementById('otp-verify-step').classList.remove('hidden');
+      } else {
+        alert('خطا در ارسال رمز یکبار مصرف.');
+      }
+    }
+
+    async function verifyOTP() {
+      const contact = document.getElementById('auth-contact').value;
+      const code = document.getElementById('auth-code').value;
+      const res = await fetch(`${API_BASE}/auth/otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contact, code })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem('token', data.token);
+        userToken = data.token;
+        closeAuthModal();
+        checkUserSession();
+      } else {
+        alert(data.error || 'کد تایید اشتباه است.');
+      }
+    }
+
+    async function handleAutocomplete(val) {
+      const box = document.getElementById('autocomplete-box');
+      if (val.length < 2) {
+        box.classList.add('hidden');
+        return;
+      }
+      const res = await fetch(`${API_BASE}/tickets/autocomplete?q=${encodeURIComponent(val)}`);
+      const suggestions = await res.json();
+      if (suggestions.length === 0) {
+        box.classList.add('hidden');
+        return;
+      }
+      // Using _fa properties from Elasticsearch
+      box.innerHTML = suggestions.map(s => `
+        <div class="p-2 hover:bg-gray-100 cursor-pointer text-sm border-b" onclick="selectSuggestion('${s.home_team_fa} vs ${s.away_team_fa}')">
+          ${s.home_team_fa} vs ${s.away_team_fa} (${s.venue_name_fa})
+        </div>
+      `).join('');
+      box.classList.remove('hidden');
+    }
+
+    function selectSuggestion(val) {
+      document.getElementById('search-input').value = val;
+      document.getElementById('autocomplete-box').classList.add('hidden');
+      performSearch();
+    }
+
+    async function performSearch() {
+      const q = document.getElementById('search-input').value;
+      const sport = document.getElementById('filter-sport').value;
+      const city = document.getElementById('filter-city').value;
+      
+      let url = `${API_BASE}/tickets/search?`;
+      if (sport) url += `sport=${sport}&`;
+      if (city) url += `city=${city}&`;
+      if (q) url += `homeTeam=${q}&`;
+
+      const res = await fetch(url);
+      const tickets = await res.json();
+      const container = document.getElementById('tickets-container');
+      
+      if (tickets.length === 0) {
+        container.innerHTML = `<div class="col-span-3 text-center text-gray-500 py-10">هیچ بلیطی مطابق جستجوی شما یافت نشد.</div>`;
+        return;
+      }
+
+      // Using _fa properties from Elasticsearch mappings
+      container.innerHTML = tickets.map(t => `
+        <div class="bg-white rounded-lg shadow-md border p-5 flex flex-col justify-between">
+          <span class="text-xs font-bold px-2 py-1 rounded bg-blue-100 text-blue-800 self-start mb-3">${t.sport_name_fa}</span>
+          <h3 class="font-bold text-lg mb-2">${t.home_team_fa} vs ${t.away_team_fa}</h3>
+          <p class="text-xs text-gray-500 mb-1">ورزشگاه: ${t.venue_name_fa} (${t.city_name_fa})</p>
+          <p class="text-xs text-gray-500 mb-3">زمان: ${new Date(t.match_time).toLocaleString('fa-IR')}</p>
+          <div class="flex justify-between items-center mt-auto border-t pt-4">
+            <span class="text-md font-bold text-green-600">${parseFloat(t.price).toLocaleString()} ریال</span>
+            <button onclick="reserveTicket(${t.id})" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded font-bold">رزرو صندلی</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function reserveTicket(ticketId) {
+      if (!userToken) {
+        alert('لطفا ابتدا وارد حساب کاربری خود شوید.');
+        openAuthModal();
+        return;
+      }
+      const res = await fetch(`${API_BASE}/reservations/reserve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+        body: JSON.stringify({ ticketId })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert('صندلی با موفقیت به مدت ۱۰ دقیقه برای شما رزرو شد. لطفا نسبت به پرداخت هزینه اقدام کنید.');
+        loadBookings();
+        performSearch();
+      } else {
+        alert(data.error || 'خطا در رزرو بلیط.');
+      }
+    }
+
+    async function loadBookings() {
+      const res = await fetch(`${API_BASE}/user/bookings`, {
+        headers: { 'Authorization': `Bearer ${userToken}` }
+      });
+      const bookings = await res.json();
+      const tbody = document.getElementById('bookings-table-body');
+      
+      // The bookings query is still standard PostgreSQL which aliases variables explicitly as home_team, etc.
+      tbody.innerHTML = bookings.map(b => `
+        <tr class="border-b hover:bg-gray-50">
+          <td class="p-3 border font-mono text-xs">${b.reservation_id}</td>
+          <td class="p-3 border font-bold">${b.home_team} vs ${b.away_team}</td>
+          <td class="p-3 border text-green-600">${parseFloat(b.price).toLocaleString()} ریال</td>
+          <td class="p-3 border">
+            <span class="px-2 py-1 rounded text-xs font-bold ${
+              b.reservation_status === 'paid' ? 'bg-green-100 text-green-800' :
+              b.reservation_status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+            }">${b.reservation_status === 'paid' ? 'پرداخت شده' : b.reservation_status === 'pending' ? 'در انتظار پرداخت' : 'لغو شده'}</span>
+          </td>
+          <td class="p-3 border flex gap-1">
+            ${b.reservation_status === 'pending' ? `<button onclick="payBooking(${b.reservation_id})" class="bg-green-500 hover:bg-green-600 text-white text-xs px-2 py-1 rounded">پرداخت</button>` : ''}
+            ${b.reservation_status === 'paid' ? `<button onclick="cancelBooking(${b.reservation_id})" class="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded">کنسلی بلیط</button>` : ''}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function payBooking(reservationId) {
+      const res = await fetch(`${API_BASE}/reservations/pay`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+        body: JSON.stringify({ reservationId })
+      });
+      if (res.ok) {
+        alert('پرداخت موفقیت‌آمیز بود. بلیط شما صادر شد.');
+        loadBookings();
+        performSearch();
+      } else {
+        alert('خطا در عملیات پرداخت.');
+      }
+    }
+
+    async function cancelBooking(reservationId) {
+      if (!confirm('آیا مایل به کنسل کردن بلیط خود بر اساس قوانین جریمه کنسلی هستید؟')) return;
+      const res = await fetch(`${API_BASE}/reservations/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+        body: JSON.stringify({ reservationId })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`کنسلی تایید شد. مبلغ ${data.refunded_amount.toLocaleString()} ریال پس از جریمه به حساب شما برگشت داده شد.`);
+        loadBookings();
+        performSearch();
+      } else {
+        alert(data.error || 'خطا در لغو بلیط.');
+      }
+    }
+
+    // لود اولیه برنامه
+    checkUserSession();
+    performSearch();
+  </script>
+</body>
+</html>
