@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION get_user_purchased_tickets(u_contact VARCHAR)
 RETURNS TABLE(ticket_id INT, home_team VARCHAR, away_team VARCHAR, price DECIMAL, purchase_time TIMESTAMP) AS $$
 BEGIN
     RETURN QUERY
-    SELECT t.id, h.name_en, a.name_en, t.price, r.reserved_at
+    SELECT t.id, h.name_fa, a.name_fa, t.price, r.reserved_at
     FROM users u
     JOIN reservations r ON u.id = r.user_id
     JOIN tickets t ON r.ticket_id = t.id
@@ -35,8 +35,8 @@ BEGIN
     RETURN QUERY
     SELECT t.id, 
            (u.first_name || ' ' || u.last_name)::text, 
-           (h.name_en || ' vs ' || a.name_en)::text, 
-           v.name_en
+           (h.name_fa || ' vs ' || a.name_fa)::text, 
+           v.name_fa
     FROM cities c
     JOIN venues v ON c.id = v.city_id
     JOIN matches m ON v.id = m.venue_id
@@ -56,9 +56,9 @@ BEGIN
     RETURN QUERY
     SELECT t.id,
            (u.first_name || ' ' || u.last_name)::text,
-           (h.name_en || ' - ' || a.name_en)::text,
-           v.name_en,
-           tc.name_en
+           (h.name_fa || ' - ' || a.name_fa)::text,
+           v.name_fa,
+           tc.name_fa
     FROM tickets t
     JOIN matches m ON t.match_id = m.id
     JOIN teams h ON m.home_team_id = h.id
@@ -69,6 +69,10 @@ BEGIN
     LEFT JOIN users u ON r.user_id = u.id
     WHERE (u.first_name ILIKE '%' || search_term || '%')
        OR (u.last_name ILIKE '%' || search_term || '%')
+       OR (h.name_fa ILIKE '%' || search_term || '%')
+       OR (a.name_fa ILIKE '%' || search_term || '%')
+       OR (v.name_fa ILIKE '%' || search_term || '%')
+       OR (tc.name_fa ILIKE '%' || search_term || '%')
        OR (h.name_en ILIKE '%' || search_term || '%')
        OR (a.name_en ILIKE '%' || search_term || '%')
        OR (v.name_en ILIKE '%' || search_term || '%')
