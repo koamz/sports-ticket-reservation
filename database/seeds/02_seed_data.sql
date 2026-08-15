@@ -1,19 +1,34 @@
--- ==========================================
--- درج داده‌های تستی اولیه چندزبانه با حفظ کامل رکوردها
--- ==========================================
-
 -- ۱. استان‌ها
 INSERT INTO provinces (name_en, name_fa) VALUES 
-('Tehran', 'تهران'), ('Isfahan', 'اصفهان'), ('Fars', 'فارس'), 
-('Khorasan Razavi', 'خراسان رضوی'), ('East Azerbaijan', 'آذربایجان شرقی'),
-('Alborz', 'البرز'), ('Mazandaran', 'مازندران'), ('Gilan', 'گیلان'), 
-('Khuzestan', 'خوزستان'), ('Yazd', 'یزد');
+('Tehran', 'تهران'),
+('Isfahan', 'اصفهان'), 
+('Fars', 'فارس'), 
+('Khorasan Razavi', 'خراسان رضوی'),
+('East Azerbaijan', 'آذربایجان شرقی'),
+('Alborz', 'البرز'), 
+('Mazandaran', 'مازندران'), 
+('Gilan', 'گیلان'), 
+('Khuzestan', 'خوزستان'), 
+('Yazd', 'یزد'),
+('Kerman', 'کرمان'),
+('Hamedan', 'همدان');
 
 -- ۲. شهرها
 INSERT INTO cities (province_id, name_en, name_fa) VALUES 
-(1, 'Tehran', 'تهران'), (1, 'Rey', 'ری'), (2, 'Isfahan', 'اصفهان'), 
-(2, 'Kashan', 'کاشان'), (3, 'Shiraz', 'شیراز'), (4, 'Mashhad', 'مشهد'), 
-(5, 'Tabriz', 'تبریز'), (6, 'Karaj', 'کرج'), (7, 'Sari', 'ساری'), (8, 'Rasht', 'رشت');
+(1, 'Tehran', 'تهران'), 
+(1, 'Rey', 'ری'), 
+(2, 'Isfahan', 'اصفهان'), 
+(2, 'Kashan', 'کاشان'), 
+(3, 'Shiraz', 'شیراز'), 
+(4, 'Mashhad', 'مشهد'), 
+(5, 'Tabriz', 'تبریز'), 
+(6, 'Karaj', 'کرج'), 
+(7, 'Sari', 'ساری'), 
+(8, 'Rasht', 'رشت'),
+(9, 'Kerman', 'کرمان'),
+(10, 'Hamedan', 'همدان'),
+(11, 'Yazd', 'یزد'),
+(1, 'Damavand', 'دماوند');
 
 -- ۳. نقش‌ها
 INSERT INTO roles (name) VALUES ('visitor'), ('support');
@@ -30,7 +45,10 @@ INSERT INTO users (role_id, city_id, first_name, last_name, email, phone, passwo
 (2, 3, 'Maryam', 'Sadati', 'maryam@gmail.com', '+989128888888', 'hash8', 'active', '2023-01-05 08:30:00'),
 (1, 1, 'Amir', 'Taji', 'amir@gmail.com', '+989129999999', 'hash9', 'active', '2023-07-22 17:30:00'),
 (1, 4, 'Neda', 'Amini', 'neda@gmail.com', '+989131111111', 'hash10', 'active', '2023-08-30 19:10:00'),
-(1, 2, 'Hassan', 'Shakeri', 'hassan@gmail.com', '+989142222222', 'hash11', 'active', '2023-09-05 10:00:00');
+(1, 2, 'Hassan', 'Shakeri', 'hassan@gmail.com', '+989142222222', 'hash11', 'active', '2023-09-05 10:00:00'),
+(1, 8, 'Hadi', 'Moradi', 'hadi@gmail.com', '+989145555555', 'hash14', 'inactive', '2023-10-01 10:00:00'),
+(1, 9, 'Fatemeh', 'Karimi', 'fatemeh@gmail.com', '+989146666666', 'hash15', 'active', '2023-10-15 14:00:00'),
+(2, 4, 'Mehdi', 'Rahmani', 'mehdi@gmail.com', '+989147777777', 'hash16', 'active', '2023-11-01 09:00:00');
 
 -- ۵. ورزشگاه‌ها
 INSERT INTO venues (city_id, name_en, name_fa, address_en, address_fa, capacity) VALUES 
@@ -43,7 +61,10 @@ INSERT INTO venues (city_id, name_en, name_fa, address_en, address_fa, capacity)
 (1, 'Tehran 12000 Hall', 'تالار ۱۲۰۰۰ نفری آزادی', 'Tehran, West', 'تهران، مجموعه ورزشی آزادی', 12000),
 (3, 'Isfahan Volleyball Arena', 'سالن والیبال اصفهان', 'Isfahan, Center', 'اصفهان، مرکز شهر', 6000),
 (7, 'Tabriz Basketball Arena', 'سالن بسکتبال تبریز', 'Tabriz, Shahgoli', 'تبریز، شاهگلی', 4000),
-(10, 'Rasht Arena', 'سالن رشت', 'Rasht, Golsar', 'رشت، گلسار', 3000);
+(10, 'Rasht Arena', 'سالن رشت', 'Rasht, Golsar', 'رشت، گلسار', 3000),
+(4, 'Mashhad Arena', 'سالن مشهد', 'Mashhad, South', 'مشهد، جنوب شهر', 8000),
+(2, 'Kashan Stadium', 'ورزشگاه کاشان', 'Kashan, Center', 'کاشان، مرکز شهر', 15000),
+(11, 'Yazd Arena', 'سالن یزد', 'Yazd, North', 'یزد، شمال شهر', 5000);
 
 -- ۶. ورزش‌ها
 INSERT INTO sports (name_en, name_fa) VALUES 
@@ -51,12 +72,21 @@ INSERT INTO sports (name_en, name_fa) VALUES
 
 -- ۷. تیم‌ها
 INSERT INTO teams (sport_id, name_en, name_fa) VALUES 
-(1, 'Perspolis', 'پرسپولیس'), (1, 'Esteghlal', 'استقلال'), 
-(1, 'Sepahan', 'سپاهان'), (1, 'Tractor', 'تراکتور'), 
-(2, 'Paykan', 'پیکان'), (2, 'Shahrdari Urmia', 'شهرداری ارومیه'), 
-(2, 'Saipa', 'سایپا'), (2, 'Kalleh', 'کاله'),
-(3, 'Mahram', 'مهرام'), (3, 'Gorgan', 'گرگان'), 
-(3, 'Petrochimi', 'پتروشیمی'), (3, 'Zob Ahan', 'ذوب آهن');
+(1, 'Perspolis', 'پرسپولیس'), 
+(1, 'Esteghlal', 'استقلال'), 
+(1, 'Sepahan', 'سپاهان'), 
+(1, 'Tractor', 'تراکتور'), 
+(2, 'Paykan', 'پیکان'), 
+(2, 'Shahrdari Urmia', 'شهرداری ارومیه'), 
+(2, 'Saipa', 'سایپا'), 
+(2, 'Kalleh', 'کاله'),
+(3, 'Mahram', 'مهرام'), 
+(3, 'Gorgan', 'گرگان'), 
+(3, 'Petrochimi', 'پتروشیمی'), 
+(3, 'Zob Ahan', 'ذوب آهن'),
+(1, 'Foolad', 'فولاد'),
+(1, 'Shahrdari Shiraz', 'شهرداری شیراز'),
+(3, 'Shahrdari Gorgan', 'شهرداری گرگان');
 
 -- ۸. مسابقات
 INSERT INTO matches (sport_id, venue_id, home_team_id, away_team_id, match_time) VALUES 

@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36">
   <diagram id="R2lEEEUBdFMjLlhIrx00" name="Page-1">
-    <mxGraphModel dx="2364" dy="456" grid="0" gridSize="10" guides="0" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1654" pageHeight="1169" background="light-dark(#33FF99,#E6FFCC)" math="0" shadow="1" extFonts="Permanent Marker^https://fonts.googleapis.com/css?family=Permanent+Marker">
+    <mxGraphModel dx="3957" dy="1807" grid="0" gridSize="10" guides="0" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1654" pageHeight="1169" background="light-dark(#33FF99,#E6FFCC)" math="0" shadow="1" extFonts="Permanent Marker^https://fonts.googleapis.com/css?family=Permanent+Marker">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1439,7 +1439,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="h4jIr_v624ZKaMaBF7ag-514" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;rounded=1;labelBackgroundColor=none;fontColor=#393C56;" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(8, 8, 8)); font-size: 18px;&quot;&gt;&lt;b&gt;User &amp;amp; Location&lt;/b&gt;&lt;/font&gt;" vertex="1">
-          <mxGeometry height="30" width="183" x="-1111.41" y="41" as="geometry" />
+          <mxGeometry height="30" width="183" x="-1111.41" y="-14" as="geometry" />
         </mxCell>
         <mxCell id="h4jIr_v624ZKaMaBF7ag-515" parent="1" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;rounded=1;labelBackgroundColor=none;fillColor=#F2CC8F;strokeColor=#E07A5F;fontColor=#393C56;" value="ticket_catagories" vertex="1">
           <mxGeometry height="121.85700916108635" width="302.1904180617559" x="-120" y="559" as="geometry" />

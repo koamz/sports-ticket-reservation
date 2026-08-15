@@ -1,7 +1,3 @@
--- ==========================================
--- ایجاد جداول فیزیکی با استاندارد دو زبانه (3NF)
--- ==========================================
-
 CREATE TABLE provinces (
     id SERIAL PRIMARY KEY,
     name_en VARCHAR(100) UNIQUE NOT NULL,
@@ -132,8 +128,8 @@ CREATE TABLE reservations (
 
 CREATE TABLE payments (
     id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(id) ON DELETE CASCADE,
     reservation_id INT UNIQUE REFERENCES reservations(id) ON DELETE CASCADE,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
     amount DECIMAL(12, 2) NOT NULL CHECK (amount >= 0),
     method VARCHAR(50) NOT NULL CHECK (method IN ('card', 'wallet', 'crypto')),
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('success', 'failed', 'pending')),
