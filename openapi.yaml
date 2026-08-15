@@ -1,0 +1,905 @@
+openapi: 3.0.0
+info:
+  title: Sports Ticketing & Reservation Platform API
+  description: Comprehensive API for sports ticket reservation, payment, and management system
+  version: 1.0.0
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development Server
+
+tags:
+  - name: Auth
+    description: Authentication & User Management
+  - name: Tickets
+    description: Ticket Search & Details
+  - name: Reservations
+    description: Reservation & Payment Management
+  - name: User
+    description: User Profile Management
+  - name: Reports
+    description: User Reports & Support
+  - name: Admin
+    description: Admin & Support Management
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Invalid or expired token."
+    
+    OTPRequest:
+      type: object
+      required:
+        - contact
+      properties:
+        contact:
+          type: string
+          description: Email or phone number
+          example: "09121234567"
+    
+    OTPVerify:
+      type: object
+      required:
+        - contact
+        - otp
+      properties:
+        contact:
+          type: string
+          example: "09121234567"
+        otp:
+          type: string
+          description: 6-digit OTP code
+          example: "123456"
+    
+    SignupRequest:
+      type: object
+      required:
+        - roleId
+        - firstName
+        - lastName
+        - email
+        - phone
+        - password
+      properties:
+        roleId:
+          type: integer
+          example: 1
+        cityId:
+          type: integer
+          example: 1
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        email:
+          type: string
+          example: "john@example.com"
+        phone:
+          type: string
+          example: "09121234567"
+        password:
+          type: string
+          example: "SecurePass123"
+    
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+            first_name:
+              type: string
+            last_name:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+            role_name:
+              type: string
+    
+    Ticket:
+      type: object
+      properties:
+        id:
+          type: integer
+        price:
+          type: number
+        remaining_capacity:
+          type: integer
+        status:
+          type: string
+          enum: [available, sold_out]
+        category_name_en:
+          type: string
+        category_name_fa:
+          type: string
+        sport_name_en:
+          type: string
+        sport_name_fa:
+          type: string
+        match_time:
+          type: string
+          format: date-time
+        home_team_en:
+          type: string
+        home_team_fa:
+          type: string
+        away_team_en:
+          type: string
+        away_team_fa:
+          type: string
+        venue_name_en:
+          type: string
+        venue_name_fa:
+          type: string
+        city_name_en:
+          type: string
+        city_name_fa:
+          type: string
+    
+    TicketSearchParams:
+      type: object
+      properties:
+        sport:
+          type: string
+          example: "Football"
+        homeTeam:
+          type: string
+          example: "Perspolis"
+        awayTeam:
+          type: string
+          example: "Esteghlal"
+        city:
+          type: string
+          example: "Tehran"
+        venue:
+          type: string
+          example: "Azadi Stadium"
+        tier:
+          type: string
+          example: "VIP"
+        maxPrice:
+          type: number
+          example: 500000
+    
+    ReservationRequest:
+      type: object
+      required:
+        - ticketId
+      properties:
+        ticketId:
+          type: integer
+          example: 1
+    
+    ReservationResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        ticket_id:
+          type: integer
+        status:
+          type: string
+          enum: [pending, paid, cancelled, expired]
+        reserved_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+    
+    PaymentRequest:
+      type: object
+      required:
+        - reservationId
+      properties:
+        reservationId:
+          type: integer
+          example: 1
+    
+    PaymentResponse:
+      type: object
+      properties:
+        payment:
+          type: object
+          properties:
+            id:
+              type: integer
+            amount:
+              type: number
+            method:
+              type: string
+            paid_at:
+              type: string
+              format: date-time
+        ticket_id:
+          type: integer
+    
+    CancelRequest:
+      type: object
+      required:
+        - reservationId
+      properties:
+        reservationId:
+          type: integer
+          example: 1
+    
+    CancelResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        original_price:
+          type: number
+        penalty_percentage:
+          type: number
+        refunded_amount:
+          type: number
+    
+    ReportRequest:
+      type: object
+      required:
+        - reservationId
+        - category
+        - subject
+        - description
+      properties:
+        reservationId:
+          type: integer
+          example: 1
+        category:
+          type: string
+          example: "Payment Issue"
+        subject:
+          type: string
+          example: "Double charge"
+        description:
+          type: string
+          example: "I was charged twice for the same ticket."
+    
+    PenaltyResponse:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+        penalty_percentage:
+          type: number
+        refund_percentage:
+          type: number
+        error:
+          type: string
+
+paths:
+  # ==================== AUTH ====================
+  /auth/otp/request:
+    post:
+      tags: [Auth]
+      summary: Request OTP for login
+      operationId: requestOTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OTPRequest'
+      responses:
+        200:
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "OTP sent successfully."
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/otp/verify:
+    post:
+      tags: [Auth]
+      summary: Verify OTP and login
+      operationId: verifyOTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OTPVerify'
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        401:
+          description: Invalid or expired OTP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/signup:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      operationId: signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        201:
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        400:
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==================== COMMON ====================
+  /common/cities-venues:
+    get:
+      tags: [Common]
+      summary: Get cities and venues list
+      operationId: getCitiesVenues
+      responses:
+        200:
+          description: List of cities with their venues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    city_id:
+                      type: integer
+                    city_name:
+                      type: string
+                    venue_id:
+                      type: integer
+                    venue_name:
+                      type: string
+                    address:
+                      type: string
+                    capacity:
+                      type: integer
+
+  # ==================== TICKETS ====================
+  /tickets/search:
+    get:
+      tags: [Tickets]
+      summary: Search tickets with filters
+      operationId: searchTickets
+      parameters:
+        - in: query
+          name: sport
+          schema:
+            type: string
+          description: Sport name (English or Persian)
+        - in: query
+          name: homeTeam
+          schema:
+            type: string
+          description: Home team name
+        - in: query
+          name: awayTeam
+          schema:
+            type: string
+          description: Away team name
+        - in: query
+          name: city
+          schema:
+            type: string
+          description: City name
+        - in: query
+          name: venue
+          schema:
+            type: string
+          description: Venue name
+        - in: query
+          name: tier
+          schema:
+            type: string
+          description: Ticket category
+        - in: query
+          name: maxPrice
+          schema:
+            type: number
+          description: Maximum price filter
+      responses:
+        200:
+          description: List of available tickets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'
+
+  /tickets/autocomplete:
+    get:
+      tags: [Tickets]
+      summary: Get autocomplete suggestions
+      operationId: autocompleteTickets
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+          description: Search query for autocomplete
+      responses:
+        200:
+          description: Autocomplete suggestions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'
+
+  /tickets/{id}:
+    get:
+      tags: [Tickets]
+      summary: Get ticket details by ID
+      operationId: getTicketDetails
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Ticket ID
+      responses:
+        200:
+          description: Ticket details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        404:
+          description: Ticket not found
+
+  # ==================== USER ====================
+  /user/profile:
+    get:
+      tags: [User]
+      summary: Get user profile
+      operationId: getUserProfile
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  first_name:
+                    type: string
+                  last_name:
+                    type: string
+                  email:
+                    type: string
+                  phone:
+                    type: string
+                  status:
+                    type: string
+                  role_name:
+                    type: string
+                  city_name:
+                    type: string
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [User]
+      summary: Update user profile
+      operationId: updateUserProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                phone:
+                  type: string
+                cityId:
+                  type: integer
+      responses:
+        200:
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  first_name:
+                    type: string
+                  last_name:
+                    type: string
+                  email:
+                    type: string
+                  phone:
+                    type: string
+        401:
+          description: Unauthorized
+
+  /user/bookings:
+    get:
+      tags: [User]
+      summary: Get user's bookings
+      operationId: getUserBookings
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of user bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    reservation_id:
+                      type: integer
+                    reservation_status:
+                      type: string
+                    reserved_at:
+                      type: string
+                    ticket_id:
+                      type: integer
+                    price:
+                      type: number
+                    match_time:
+                      type: string
+                    sport_name:
+                      type: string
+                    home_team:
+                      type: string
+                    away_team:
+                      type: string
+
+  # ==================== RESERVATIONS ====================
+  /reservations/reserve:
+    post:
+      tags: [Reservations]
+      summary: Reserve a ticket temporarily
+      operationId: reserveTicket
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationRequest'
+      responses:
+        201:
+          description: Ticket reserved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+        400:
+          description: Ticket already reserved or sold out
+        401:
+          description: Unauthorized
+
+  /reservations/pay:
+    post:
+      tags: [Reservations]
+      summary: Pay for a reserved ticket
+      operationId: payReservation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        200:
+          description: Payment successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        400:
+          description: Reservation not found or expired
+        401:
+          description: Unauthorized
+
+  /reservations/{id}/penalty:
+    get:
+      tags: [Reservations]
+      summary: Check cancellation penalty
+      operationId: checkPenalty
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Reservation ID
+      responses:
+        200:
+          description: Penalty information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PenaltyResponse'
+        401:
+          description: Unauthorized
+
+  /reservations/cancel:
+    post:
+      tags: [Reservations]
+      summary: Cancel reservation and get refund
+      operationId: cancelReservation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelRequest'
+      responses:
+        200:
+          description: Cancellation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelResponse'
+        400:
+          description: Cannot cancel (match started, not paid, etc.)
+        401:
+          description: Unauthorized
+
+  # ==================== REPORTS ====================
+  /reports/submit:
+    post:
+      tags: [Reports]
+      summary: Submit a report/issue
+      operationId: submitReport
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+      responses:
+        201:
+          description: Report submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  user_id:
+                    type: integer
+                  reservation_id:
+                    type: integer
+                  category:
+                    type: string
+                  subject:
+                    type: string
+                  description:
+                    type: string
+                  status:
+                    type: string
+                  created_at:
+                    type: string
+        401:
+          description: Unauthorized
+
+  # ==================== ADMIN ====================
+  /admin/reservations:
+    get:
+      tags: [Admin]
+      summary: Get all reservations (Admin only)
+      operationId: adminGetReservations
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of all reservations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    reservation_id:
+                      type: integer
+                    reservation_status:
+                      type: string
+                    reserved_at:
+                      type: string
+                    first_name:
+                      type: string
+                    last_name:
+                      type: string
+                    email:
+                      type: string
+                    ticket_id:
+                      type: integer
+                    price:
+                      type: number
+        403:
+          description: Insufficient permissions
+        401:
+          description: Unauthorized
+
+    put:
+      tags: [Admin]
+      summary: Update reservation status (Admin only)
+      operationId: adminUpdateReservation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reservationId
+                - status
+              properties:
+                reservationId:
+                  type: integer
+                  example: 1
+                status:
+                  type: string
+                  enum: [pending, paid, cancelled, expired]
+      responses:
+        200:
+          description: Reservation updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  status:
+                    type: string
+        403:
+          description: Insufficient permissions
+
+  /admin/reports:
+    get:
+      tags: [Admin]
+      summary: Get all reports (Admin only)
+      operationId: adminGetReports
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of all reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    user_id:
+                      type: integer
+                    first_name:
+                      type: string
+                    last_name:
+                      type: string
+                    email:
+                      type: string
+                    category:
+                      type: string
+                    subject:
+                      type: string
+                    description:
+                      type: string
+                    status:
+                      type: string
+                    created_at:
+                      type: string
+
+    put:
+      tags: [Admin]
+      summary: Update report status (Admin only)
+      operationId: adminUpdateReport
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reportId
+                - status
+              properties:
+                reportId:
+                  type: integer
+                  example: 1
+                status:
+                  type: string
+                  enum: [pending, reviewed]
+      responses:
+        200:
+          description: Report updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  status:
+                    type: string
