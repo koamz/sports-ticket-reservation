@@ -353,9 +353,13 @@
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
         body: JSON.stringify({ reservationId, status: 'cancelled' })
       });
+      const data = await res.json();
       if (res.ok) {
-        alert('رزرو توسط پشتیبان لغو گردید.');
+        alert('رزرو با موفقیت توسط پشتیبان لغو شد و ظرفیت صندلی به مسابقه بازگشت.');
         loadAdminData();
+        performSearch(); // رفرش لیست مسابقات
+      } else {
+        alert(data.error || 'خطا در لغو رزرو توسط پشتیبان.');
       }
     }
 
