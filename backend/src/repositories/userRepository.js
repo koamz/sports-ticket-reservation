@@ -6,7 +6,7 @@ export class UserRepository {
       SELECT u.*, r.name AS role_name 
       FROM users u
       JOIN roles r ON u.role_id = r.id
-      WHERE u.email = $1 OR u.phone = $1
+      WHERE u.email ILIKE $1 OR u.phone = $1
     `;
     const { rows } = await pool.query(query, [contact]);
     return rows[0];
