@@ -90,6 +90,7 @@
         <label class="block text-sm mb-2">کد ۶ رقمی ارسال شده را وارد کنید:</label>
         <input type="text" id="auth-code" class="border rounded p-2 w-full mb-4 text-sm text-center tracking-widest" placeholder="123456">
         <button onclick="verifyOTP()" class="w-full bg-green-600 hover:bg-green-700 text-white rounded p-2 text-sm font-bold">تایید و ورود به سامانه</button>
+        <button onclick="resetAuthSteps()" class="w-full text-blue-600 text-xs hover:underline text-center mt-2">ویرایش ایمیل / بازگشت</button>
       </div>
       <button onclick="closeAuthModal()" class="w-full mt-4 text-gray-500 text-xs hover:underline">انصراف</button>
     </div>
@@ -125,12 +126,22 @@
       dbSection.classList.add('hidden');
     }
 
+    function resetAuthSteps() {
+      document.getElementById('otp-request-step').classList.remove('hidden');
+      document.getElementById('otp-verify-step').classList.add('hidden');
+      document.getElementById('auth-code').value = '';
+    }
+
     function openAuthModal() {
+      resetAuthSteps();
       document.getElementById('auth-modal').classList.remove('hidden');
     }
+
     function closeAuthModal() {
       document.getElementById('auth-modal').classList.add('hidden');
+      resetAuthSteps();
     }
+
     function logout() {
       localStorage.removeItem('token');
       userToken = null;
@@ -138,36 +149,40 @@
     }
 
     async function requestOTP() {
-      const contact = document.getElementById('auth-contact').value;
+      const contact = document.getElementById('auth-contact').value.trim();
       const res = await fetch(`${API_BASE}/auth/otp/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contact })
       });
+      const data = await res.json(); // <-- اضافه کردن دریافت دیتای جیسون
       if (res.ok) {
         document.getElementById('otp-request-step').classList.add('hidden');
         document.getElementById('otp-verify-step').classList.remove('hidden');
       } else {
-        alert('خطا در ارسال رمز یکبار مصرف.');
+        alert(data.error || 'فرمت ایمیل یا شماره تلفن نامعتبر است.'); // <-- نمایش خطای دقیق سرور
       }
     }
 
     async function verifyOTP() {
-      const contact = document.getElementById('auth-contact').value;
-      const code = document.getElementById('auth-code').value;
+      const contact = document.getElementById('auth-contact').value.trim();
+      const code = document.getElementById('auth-code').value.trim();
       const res = await fetch(`${API_BASE}/auth/otp/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contact, code })
       });
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data.token) {
         localStorage.setItem('token', data.token);
         userToken = data.token;
         closeAuthModal();
         checkUserSession();
+      } else if (data.signup_required) {
+        alert('این ایمیل در سیستم ثبت نشده است. لطفاً از ایمیل کاربران تستی (مانند ali@gmail.com) استفاده کنید.');
+        closeAuthModal();
       } else {
-        alert(data.error || 'کد تایید اشتباه است.');
+        alert(data.error || 'کد تایید اشتباه است یا منقضی شده.');
       }
     }
 
