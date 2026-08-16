@@ -114,6 +114,22 @@ export class UserService {
     password
   }) {
 
+    if (!firstName || !firstName.trim()) {
+      throw new Error('First name is required.');
+    }
+
+    if (!lastName || !lastName.trim()) {
+      throw new Error('Last name is required.');
+    }
+
+    if (!email || !email.trim()) {
+      throw new Error('Email is required.');
+    }
+
+    if (!phone || !phone.trim()) {
+      throw new Error('Phone is required.');
+    }
+
     if (
       password === undefined ||
       password === null ||
@@ -126,19 +142,19 @@ export class UserService {
       throw new Error('Password must be at least 6 characters.');
     }
 
-    if (!email || !email.trim()) {
-      throw new Error('Email is required.');
-    }
+    // انتساب خودکار نقش تماشاگر (roleId = 1) و شهر پیش‌فرض در صورت عدم ارسال
+    const finalRoleId = roleId || 1;
+    const finalCityId = cityId || 1;
 
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await UserRepository.create({
-      roleId,
-      cityId,
-      firstName,
-      lastName,
-      email,
-      phone,
+      roleId: finalRoleId,
+      cityId: finalCityId,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
       passwordHash
     });
 
