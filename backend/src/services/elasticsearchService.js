@@ -159,33 +159,32 @@ export class ElasticsearchService {
         { range: { remaining_capacity: { gt: 0 } } }
       ];
 
+      // فیلتر هوشمند نوع ورزش (پشتیبانی همزمان از فارسی و انگلیسی بدون حساسیت به حروف)
       if (sport) {
         mustQueries.push({
-          bool: {
-            should: [
-              { term: { sport_name_en: sport } },
-              { term: { sport_name_fa: sport } }
-            ]
+          multi_match: {
+            query: sport,
+            fields: ['sport_name_en', 'sport_name_fa']
           }
         });
       }
+
+      // فیلتر هوشمند شهر برگزاری (پشتیبانی همزمان از فارسی و انگلیسی)
       if (city) {
         mustQueries.push({
-          bool: {
-            should: [
-              { term: { city_name_en: city } },
-              { term: { city_name_fa: city } }
-            ]
+          multi_match: {
+            query: city,
+            fields: ['city_name_en', 'city_name_fa']
           }
         });
       }
+
+      // فیلتر رده بلیط
       if (tier) {
         mustQueries.push({
-          bool: {
-            should: [
-              { term: { category_name_en: tier } },
-              { term: { category_name_fa: tier } }
-            ]
+          multi_match: {
+            query: tier,
+            fields: ['category_name_en', 'category_name_fa']
           }
         });
       }
