@@ -24,47 +24,117 @@ This platform is a comprehensive, middleman-free sports ticket reservation and p
 ## 2. Repository Directory Tree
 The repository structure is organized in a highly modular, decoupled fashion:
 
-```text
+```directory
 sports-ticket-reservation
-├── README.md                     # Project main documentation
-├── docker-compose.yml            # Multi-container orchestration script
-│
-├── backend/                      # Server-side Application (Node.js)
-│   ├── Dockerfile                # Docker build instructions for Backend
-│   ├── package.json              # Node.js dependencies and scripts
-│   ├── src/
-│   │   ├── app.js                # Express app config & static client serving
-│   │   ├── server.js             # Entry point & automated reservation cleanup job
-│   │   ├── config/               # Raw Database & caching connection drivers
-│   │   ├── controllers/          # HTTP request/response handlers (JSON API)
-│   │   ├── middleware/           # Security guards (JWT & Role controllers)
-│   │   ├── models/               # Domain validation schemas & entities
-│   │   ├── repositories/         # Parameterized raw SQL queries (No ORM)
-│   │   ├── routes/               # REST API route declarations
-│   │   └── services/             # Core business logic & Redis cache invalidations
-│   └── tests/                    # Server testing suite (Jest)
-│       ├── integration/          # HTTP API integration tests
-│       └── unit/                 # Isolated business logic unit tests
-│
-├── database/                     # Relational Database Scripts
-│   ├── erd/                      # Entity Relationship Diagram (ERD) source & image
-│   ├── migrations/               # Physical table creation DDL
-│   ├── procedures/               # PostgreSQL PL/pgSQL Stored Procedures
-│   ├── queries/                  # 22 complex analytical SQL queries
-│   └── seeds/                    # Seed mock dataset for testing (10+ records per table)
-│
-├── docs/                         # Dynamic progress reports
-│   ├── project_report.md
-│   └── project_report.docx
-│
-├── frontend/                     # Client Application (Single Page Application)
-│   └── index.html                # Responsive web client UI (Tailwind CSS)
-│
-└── tests/                        # Database verification suite (Python)
-    ├── db/
-    │   ├── conftest.py           # Database transaction testing fixtures
-    │   └── test_database.py      # 33 rigorous raw SQL testing cases
-    └── requirements.txt          # Python testing dependencies
+├── README.md                                             # Main project documentation and run guide
+├── backend                                               # Server-side application directory (Node.js/Express)
+│   ├── Dockerfile                                        # Multi-stage production container build instructions
+│   ├── package-lock.json                                 # Locked npm dependency tree for backend
+│   ├── package.json                                      # Node.js dependencies, scripts, and Jest configurations
+│   ├── src                                               # Main backend source code
+│   │   ├── app.js                                        # Express application configuration & static client hosting
+│   │   ├── config                                        # Database, cache, and search engine connection drivers
+│   │   │   ├── db.js                                     # PostgreSQL raw connection pool instance
+│   │   │   ├── elasticsearch.js                          # Elasticsearch client instance & configuration
+│   │   │   └── redis.js                                  # Redis cache & session client connection
+│   │   ├── controllers                                   # HTTP request handlers and JSON response dispatchers
+│   │   │   ├── reportController.js                       # Handlers for issue reporting and admin review
+│   │   │   ├── reservationController.js                  # Handlers for ticket reservation, payment, and cancellation
+│   │   │   ├── ticketController.js                       # Handlers for ticket search and detail fetching
+│   │   │   └── userController.js                         # Handlers for OTP auth, registration, and user profiles
+│   │   ├── middleware                                    # Custom Express security middlewares
+│   │   │   └── auth.js                                   # JWT authentication guard and role-based access controller
+│   │   ├── models                                        # Domain models and input validation schemas (No ORM)
+│   │   │   ├── Reservation.js                            # Reservation domain model and state validator
+│   │   │   ├── Ticket.js                                 # Ticket domain model and availability checker
+│   │   │   └── User.js                                   # User domain model and signup input validation
+│   │   ├── repositories                                  # Parameterized raw SQL query execution layer
+│   │   │   ├── reportRepository.js                       # Raw SQL queries for issue reports and admin oversight
+│   │   │   ├── reservationRepository.js                  # Raw SQL transactions for reservations, payments, and refunds
+│   │   │   ├── ticketRepository.js                       # Raw SQL queries for ticket catalog and sport details
+│   │   │   └── userRepository.js                         # Raw SQL queries for user authentication and profiles
+│   │   ├── routes                                        # API route declarations
+│   │   │   └── api.js                                    # Consolidated RESTful API routes
+│   │   ├── server.js                                     # Application entry point & automated reservation cleanup scheduler
+│   │   └── services                                      # Business logic, caching layer, and search orchestrators
+│   │       ├── elasticsearchService.js                   # Elasticsearch index management, live synchronization, and autocomplete
+│   │       ├── reportService.js                          # Business logic for issue submission and processing
+│   │       ├── reservationService.js                     # Reservation timeout locks, payments, and cancellation penalties
+│   │       ├── ticketService.js                          # Ticket search aggregation and Redis cache invalidation
+│   │       └── userService.js                            # OTP generation, verification, and user profile management
+│   └── tests                                             # Backend automated testing suite (Jest)
+│       ├── integration                                   # HTTP API end-to-end integration tests
+│       │   ├── api.test.js                               # Integration tests for endpoints and security guards
+│       │   └── verification.test.js                      # Rigorous sports ticketing bug verification suite
+│       └── unit                                          # Isolated business logic unit tests
+│           ├── elasticsearchService.test.js              # Unit tests for Elasticsearch query builders & analyzers
+│           ├── reservationService.test.js                # Unit tests for cancellation penalty calculation rules
+│           └── ticketService.test.js                     # Unit tests for Redis cache hit/miss behaviors
+├── database                                              # Relational database resources and scripts
+│   ├── erd                                               # Entity Relationship Diagram (ERD) assets
+│   │   ├── ER_Diagram.drawio                             # Editable source diagram in Draw.io format
+│   │   └── ER_Diagram.png                                # Rendered physical database schema diagram image
+│   ├── migrations                                        # Database migration scripts (DDL)
+│   │   └── 01_init_schema.sql                            # PostgreSQL physical schema creation script with constraints
+│   ├── procedures                                        # Database stored routines (PL/pgSQL)
+│   │   └── stored_procedures.sql                         # 8 PL/pgSQL stored procedures for analytical tasks
+│   ├── queries                                           # Analytical and informational SQL queries
+│   │   ├── analytical_queries.sql                        # 22 required analytical SQL queries
+│   │   └── analytical_queries_optimized.sql              # Query-optimized analytical SQL queries with index hints
+│   └── seeds                                             # Sample dataset scripts (DML)
+│       └── 02_seed_data.sql                              # Initial mock dataset (10+ records per table)
+├── docker-compose.yml                                    # Multi-container orchestration (PostgreSQL, Redis, Elasticsearch, Backend)
+├── docs                                                  # Academic reports and requirement specifications
+│   ├── phase1-report.md                                  # Phase 1 delivery report (ERD & Database design)
+│   ├── project_report.md                                 # Comprehensive dynamic final project report (Markdown format)
+│   ├── project_requirements.md                           # Complete system requirements and professor's specification
+│   └── tables_visual.drawio                              # Draw.io diagram visually mapping normalized physical tables
+├── frontend                                              # Client-side web application implementations
+│   ├── index.html                                        # Lightweight standalone single-page web client (Tailwind CSS)
+│   └── ticket-app                                        # Modern single-page web application (React + TypeScript + Vite)
+│       ├── README.md                                     # Frontend application documentation and setup guide
+│       ├── index.html                                    # Vite HTML entry point for the React application
+│       ├── package-lock.json                             # Locked npm dependency tree for frontend
+│       ├── package.json                                  # React dependencies, scripts, and build tools
+│       ├── public                                        # Static public assets
+│       │   ├── favicon.svg                               # Website vector favicon
+│       │   └── icons.svg                                 # Sprite SVG icons
+│       ├── src                                           # React application source code
+│       │   ├── App.css                                   # Global custom stylesheet
+│       │   ├── App.tsx                                   # Main root React component layout
+│       │   ├── api                                       # API client integrations
+│       │   │   └── client.ts                             # API client wrapper for backend endpoints
+│       │   ├── assets                                    # Static graphics and vector assets
+│       │   │   ├── hero.png                              # Landing hero banner image
+│       │   │   ├── react.svg                             # React vector logo
+│       │   │   └── vite.svg                              # Vite vector logo
+│       │   ├── components                                # Modular UI React components
+│       │   │   ├── AuthModal.tsx                         # OTP authentication and registration modal dialog
+│       │   │   ├── BookingsTable.tsx                     # User booking history and cancellation control table
+│       │   │   ├── Dashboard.tsx                         # User dashboard view displaying active bookings
+│       │   │   ├── Header.tsx                            # Application header navigation bar
+│       │   │   ├── Hero.tsx                              # Hero banner section
+│       │   │   ├── SearchFilters.tsx                     # Search bar component with live Elasticsearch autocomplete
+│       │   │   ├── TicketCard.tsx                        # Individual ticket card displaying match info & pricing
+│       │   │   └── TicketsGrid.tsx                       # Grid component displaying available tickets
+│       │   ├── hooks                                     # Custom React hooks for state management
+│       │   │   ├── useAuth.ts                            # Hook for managing authentication state and token storage
+│       │   │   ├── useBookings.ts                        # Hook for fetching and cancelling user reservations
+│       │   │   └── useTickets.ts                         # Hook for fetching and searching tickets via Elasticsearch
+│       │   ├── index.css                                 # Tailwind CSS styles and custom font configurations
+│       │   ├── main.tsx                                  # React DOM bootstrap and rendering entry point
+│       │   └── types                                     # TypeScript interface and type definitions
+│       │       └── index.ts                              # Centralized domain types (Ticket, User, Reservation, etc.)
+│       ├── tsconfig.app.json                             # TypeScript compiler configuration for application code
+│       ├── tsconfig.json                                 # Root TypeScript configuration
+│       ├── tsconfig.node.json                            # TypeScript compiler configuration for Vite Node environment
+│       └── vite.config.ts                                # Vite bundler configuration and dev-server proxy settings
+├── openapi.yaml                                          # Complete OpenAPI 3.0 (Swagger) specification for all API endpoints
+└── tests                                                 # Python database verification suite
+    ├── db                                                # Database testing files
+    │   ├── conftest.py                                   # Pytest fixtures and database connection hooks
+    │   └── test_database.py                              # 33 database integration test cases (Constraints, Queries, SPs)
+    └── requirements.txt                                  # Python dependencies for running database test suite
 ```
 
 ---
