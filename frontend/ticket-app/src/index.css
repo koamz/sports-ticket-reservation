@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+
+@theme {
+  --font-sans: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+  --font-score: "Teko", "Vazirmatn", sans-serif;
+
+  --color-pitch-950: #0b1626;
+  --color-pitch-900: #0e1b2b;
+  --color-pitch-800: #16283d;
+  --color-pitch-700: #203a56;
+
+  --color-turf-600: #16803a;
+  --color-turf-500: #1f9d55;
+  --color-turf-400: #3ec46f;
+
+  --color-amber-ticket: #f2a93b;
+  --color-amber-ticket-dark: #d98f22;
+
+  --color-ink-900: #16212e;
+  --color-slate-500: #64748b;
+  --color-mist-50: #f7f9fb;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-mist-50);
+  color: var(--color-ink-900);
+}
+
+.font-score {
+  font-family: var(--font-score);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.ticket-stub {
+  position: relative;
+}
+
+.ticket-stub__tear {
+  position: relative;
+  border-inline-start: 2px dashed color-mix(in oklab, var(--color-slate-500) 45%, transparent);
+}
+
+.ticket-stub__tear::before,
+.ticket-stub__tear::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: -9px;
+  width: 18px;
+  height: 18px;
+  background: var(--color-mist-50);
+  border-radius: 9999px;
+}
+.ticket-stub__tear::before {
+  top: -9px;
+}
+.ticket-stub__tear::after {
+  bottom: -9px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rise-in {
+    animation: rise-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-turf-500);
+  outline-offset: 2px;
+}
