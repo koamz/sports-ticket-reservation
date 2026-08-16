@@ -159,14 +159,34 @@ export class ReservationRepository {
   }
 
   static async adminUpdateReservationStatus(reservationId, status, adminId) {
-    const query = `
-      UPDATE reservations
-      SET status = $1, cancelled_by = CASE WHEN $1 = 'cancelled' THEN $2 ELSE cancelled_by END
-      WHERE id = $3
-      RETURNING id, status
-    `;
-    const { rows } = await pool.query(query, [status, adminId, reservationId]);
-    return rows[0];
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // تعیین صریح نوع داده پارامترها برای موتور دیتابیس پستگرس
+      const updateQuery = `
+        UPDATE reservations
+        SET status = $1::varchar, 
+            cancelled_by = CASE WHEN $1::varchar = 'cancelled' THEN $2::int ELSE cancelled_by END
+        WHERE id = $3::int
+        RETURNING id, status, ticket_id
+      `;
+      const { rows } = await client.query(updateQuery, [status, adminId, reservationId]);
+      const updated = rows[0];
+
+      if (updated && status === 'cancelled') {
+        // بازگرداندن صندلی به ظرفیت فعال مسابقه
+        await client.query(`UPDATE tickets SET remaining_capacity = remaining_capacity + 1, status = 'available' WHERE id = $1`, [updated.ticket_id]);
+      }
+
+      await client.query('COMMIT');
+      return updated;
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   static async expirePendingReservations() {
