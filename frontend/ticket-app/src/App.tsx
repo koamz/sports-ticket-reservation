@@ -2,7 +2,9 @@ import { useState } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import SearchFilters from './components/SearchFilters';
+import TicketsGrid from './components/TicketsGrid';
 import Dashboard from './components/Dashboard';
+import AuthModal from './components/AuthModal';
 import { useAuth } from './hooks/useAuth';
 import { useTickets } from './hooks/useTickets';
 import { useBookings } from './hooks/useBookings';
@@ -74,6 +76,7 @@ export default function App() {
 
         <section className="mt-8">
           <h2 className="mb-4 text-lg font-extrabold text-ink-900">مسابقات ورزشی در دسترس</h2>
+          <TicketsGrid tickets={tickets} loading={loading} onReserve={handleReserve} />
         </section>
 
         {isAuthenticated && (
@@ -81,7 +84,12 @@ export default function App() {
         )}
       </main>
 
-    
+      <AuthModal
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onRequestOtp={requestOtp}
+        onVerifyOtp={verifyOtp}
+      />
     </div>
   );
 }
