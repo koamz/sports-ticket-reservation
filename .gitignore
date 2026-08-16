@@ -1,3 +1,6 @@
+node_modules/
+backend/node_modules/
+
 # Local automation scripts
 push_all.bat
 *.swp
