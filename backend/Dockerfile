@@ -1,12 +1,13 @@
 # مرحله اول: بیلد و نصب وابستگی‌ها
 FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package*.json ./
+COPY backend/package*.json ./
 RUN npm config set registry https://registry.npmmirror.com
 RUN npm ci
-COPY . .
+COPY backend/ ./
+COPY openapi.yaml ./
 
-# مرحله دوم: اجرای سرور فوق سبک پروداکشن
+# مرحله دوم: اجرای سرور پروداکشن
 FROM node:20-alpine
 WORKDIR /app
 COPY --from=builder /app ./
