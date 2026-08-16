@@ -4,7 +4,12 @@ export const ReservationController = {
   async reserve(req, res) {
     try {
       const { ticketId } = req.body;
-      const result = await ReservationService.reserve(req.user.id, ticketId);
+
+      const result = await ReservationService.reserve(
+        req.user.id,
+        ticketId
+      );
+
       res.status(201).json(result);
     } catch (e) {
       res.status(400).json({ error: e.message });
@@ -14,7 +19,12 @@ export const ReservationController = {
   async pay(req, res) {
     try {
       const { reservationId } = req.body;
-      const result = await ReservationService.pay(req.user.id, reservationId);
+
+      const result = await ReservationService.pay(
+        req.user.id,
+        reservationId
+      );
+
       res.status(200).json(result);
     } catch (e) {
       res.status(400).json({ error: e.message });
@@ -23,46 +33,92 @@ export const ReservationController = {
 
   async checkPenalty(req, res) {
     try {
-      // این متد می‌تواند زمان مسابقه را از دیتابیس یا سرویس رزرو دریافت کند
-      // به عنوان نمونه ساختار پاسخ جریمه:
-      res.status(200).json({ message: 'Use cancel endpoint to check penalty dynamically.' });
+      const { id } = req.params;
+
+      const result = await ReservationService.checkPenalty(
+        req.user.id,
+        id
+      );
+
+      res.status(200).json(result);
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      if (e.code === 'RESERVATION_NOT_FOUND') {
+        return res.status(404).json({
+          error: 'Reservation not found.'
+        });
+      }
+
+      res.status(400).json({
+        error: e.message
+      });
     }
   },
 
   async cancel(req, res) {
     try {
       const { reservationId } = req.body;
-      const result = await ReservationService.cancelAndRefund(req.user.id, reservationId);
+
+      const result =
+        await ReservationService.cancelAndRefund(
+          req.user.id,
+          reservationId
+        );
+
       res.status(200).json(result);
     } catch (e) {
-      res.status(400).json({ error: e.message });
+      res.status(400).json({
+        error: e.message
+      });
     }
   },
 
   async getBookings(req, res) {
     try {
-      // پیاده‌سازی دریافت تاریخچه رزروها از طریق لایه ریپازیتوری یا سرویس
-      res.status(200).json({ message: 'Bookings list endpoint.' });
+      const result =
+        await ReservationService.getBookings(
+          req.user.id
+        );
+
+      res.status(200).json(result);
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      res.status(500).json({
+        error: e.message
+      });
     }
   },
 
   async adminGetReservations(req, res) {
     try {
-      res.status(200).json({ message: 'Admin reservations list.' });
+      const result =
+        await ReservationService.adminGetReservations();
+
+      res.status(200).json(result);
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      res.status(500).json({
+        error: e.message
+      });
     }
   },
 
   async adminUpdateReservation(req, res) {
     try {
-      res.status(200).json({ message: 'Reservation updated by admin.' });
+      const {
+        reservationId,
+        status
+      } = req.body;
+
+      const result =
+        await ReservationService.adminUpdateReservation(
+          reservationId,
+          status,
+          req.user.id
+        );
+
+      res.status(200).json(result);
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      res.status(400).json({
+        error: e.message
+      });
     }
   }
 };
