@@ -15,12 +15,28 @@ export class ReservationRepository {
       const ticketRes = await client.query(checkTicket, [ticketId]);
       const ticket = ticketRes.rows[0];
 
-      // تغییر متن استثنا برای هماهنگی با قیدهای تست یکپارچه‌سازی در صورت خالی بودن صندلی
       if (!ticket || ticket.status === 'sold_out' || ticket.remaining_capacity <= 0) {
         throw new Error('This ticket seat has already been reserved or purchased by another user.');
       }
 
-      // ۲. ثبت اطلاعات در جدول رزروها
+      // ۲. بررسی رزروهای قبلی روی این صندلی
+      const checkExisting = `
+        SELECT id, status, expires_at FROM reservations 
+        WHERE ticket_id = $1 FOR UPDATE
+      `;
+      const existingRes = await client.query(checkExisting, [ticketId]);
+      const existing = existingRes.rows[0];
+
+      if (existing) {
+        // اگر صندلی پرداخت شده باشد یا رزرو معلق آن هنوز منقضی نشده باشد، اجازه رزرو مجدد داده نمی‌شود
+        if (existing.status === 'paid' || (existing.status === 'pending' && new Date(existing.expires_at) > new Date())) {
+          throw new Error('This ticket seat has already been reserved or purchased by another user.');
+        }
+        // اگر رزرو قبلی لغو شده یا منقضی شده باشد، رکورد قدیمی پاک می‌شود تا صندلی آزاد شده و قید یکتا نشکند
+        await client.query(`DELETE FROM reservations WHERE id = $1`, [existing.id]);
+      }
+
+      // ۳. ثبت اطلاعات در جدول رزروها
       const insertRes = `
         INSERT INTO reservations (user_id, ticket_id, status, expires_at)
         VALUES ($1, $2, 'pending', $3)
@@ -32,8 +48,6 @@ export class ReservationRepository {
       return resVal.rows[0];
     } catch (e) {
       await client.query('ROLLBACK');
-      
-      // شکار خطای کد ۲۳۵۰۵ پستگرس (نقض قید یکتایی صندلی رزرو شده) جهت بازگشت ارور ۴۰۰ خوش‌ساخت
       if (e.code === '23505') {
         throw new Error('This ticket seat has already been reserved or purchased by another user.');
       }
