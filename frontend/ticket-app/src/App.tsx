@@ -1,122 +1,95 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from 'react';
+import Header from './components/Header';
+import Hero from './components/Hero';
+import SearchFilters from './components/SearchFilters';
+import TicketsGrid from './components/TicketsGrid';
+import Dashboard from './components/Dashboard';
+import AuthModal from './components/AuthModal';
+import { useAuth } from './hooks/useAuth';
+import { useTickets } from './hooks/useTickets';
+import { useBookings } from './hooks/useBookings';
+import { api, ApiError } from './api/client';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const { token, user, isAuthenticated, requestOtp, verifyOtp, logout } = useAuth();
+  const { tickets, loading, filters, setFilter, suggestions, setSuggestions, search } = useTickets();
+  const { bookings, pay, cancel, load: loadBookings } = useBookings(token);
+  const [authOpen, setAuthOpen] = useState(false);
+
+  const handleSelectSuggestion = (value: string) => {
+    setFilter('homeTeam', value);
+    setSuggestions([]);
+    search({ homeTeam: value });
+  };
+
+  const handleReserve = async (ticketId: number) => {
+    if (!isAuthenticated || !token) {
+      setAuthOpen(true);
+      return;
+    }
+    try {
+      await api.reservations.reserve(ticketId, token);
+      alert('صندلی با موفقیت به مدت ۱۰ دقیقه برای شما رزرو شد. لطفا نسبت به پرداخت هزینه اقدام کنید.');
+      loadBookings();
+      search();
+    } catch (err) {
+      const message = err instanceof ApiError ? (err.data as { error?: string })?.error : undefined;
+      alert(message || 'خطا در رزرو بلیط.');
+    }
+  };
+
+  const handlePay = async (reservationId: number) => {
+    try {
+      await pay(reservationId);
+      alert('پرداخت موفقیت‌آمیز بود. بلیط شما صادر شد.');
+      search();
+    } catch {
+      alert('خطا در عملیات پرداخت.');
+    }
+  };
+
+  const handleCancel = async (reservationId: number) => {
+    if (!confirm('آیا مایل به کنسل کردن بلیط خود بر اساس قوانین جریمه کنسلی هستید؟')) return;
+    try {
+      const data = await cancel(reservationId);
+      alert(`کنسلی تایید شد. مبلغ ${data.refunded_amount.toLocaleString('fa-IR')} ریال پس از جریمه به حساب شما برگشت داده شد.`);
+      search();
+    } catch (err) {
+      const message = err instanceof ApiError ? (err.data as { error?: string })?.error : undefined;
+      alert(message || 'خطا در لغو بلیط.');
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="min-h-screen bg-mist-50">
+      <Header user={user} onLoginClick={() => setAuthOpen(true)} onLogout={logout} />
+      <Hero />
 
-      <div className="ticks"></div>
+      <main className="mx-auto max-w-6xl px-4 pb-16">
+        <SearchFilters
+          filters={filters}
+          setFilter={setFilter}
+          suggestions={suggestions}
+          onSelectSuggestion={handleSelectSuggestion}
+          onSearch={() => search()}
+        />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        <section className="mt-8">
+          <h2 className="mb-4 text-lg font-extrabold text-ink-900">مسابقات ورزشی در دسترس</h2>
+          <TicketsGrid tickets={tickets} loading={loading} onReserve={handleReserve} />
+        </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {isAuthenticated && (
+          <Dashboard bookings={bookings} onPay={handlePay} onCancel={handleCancel} />
+        )}
+      </main>
+
+      <AuthModal
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onRequestOtp={requestOtp}
+        onVerifyOtp={verifyOtp}
+      />
+    </div>
+  );
 }
-
-export default App
