@@ -171,15 +171,18 @@ export class ReservationService {
     return await ReservationRepository.adminGetReservations();
   }
 
-  static async adminUpdateReservation(
-    reservationId,
-    status,
-    adminId
-  ) {
-    return await ReservationRepository.adminUpdateReservationStatus(
+  static async adminUpdateReservation(reservationId, status, adminId) {
+    const updated = await ReservationRepository.adminUpdateReservationStatus(
       reservationId,
       status,
       adminId
     );
+
+    if (updated && updated.ticket_id) {
+      await ElasticsearchService.syncTicket(updated.ticket_id);
+      await TicketService.clearTicketCache(updated.ticket_id);
+    }
+
+    return updated;
   }
 }
