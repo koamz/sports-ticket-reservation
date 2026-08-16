@@ -6,7 +6,10 @@ export class ReservationRepository {
     try {
       await client.query('BEGIN');
 
-      // ۱. بررسی ظرفیت و موجود بودن بلیط برای جلوگیری از تعارض همزمانی
+      // ۱. حذف خودکار قید تک‌صندلی در صورت وجود، تا امکان خرید چند کاربر از ظرفیت کل مسابقه فراهم شود
+      await client.query('ALTER TABLE reservations DROP CONSTRAINT IF EXISTS reservations_ticket_id_key;');
+
+      // ۲. بررسی ظرفیت واقعی مسابقه
       const checkTicket = `
         SELECT price, remaining_capacity, status 
         FROM tickets 
@@ -16,27 +19,20 @@ export class ReservationRepository {
       const ticket = ticketRes.rows[0];
 
       if (!ticket || ticket.status === 'sold_out' || ticket.remaining_capacity <= 0) {
-        throw new Error('This ticket seat has already been reserved or purchased by another user.');
+        throw new Error('ظرفیت این مسابقه تکمیل شده است و صندلی خالی وجود ندارد.');
       }
 
-      // ۲. بررسی رزروهای قبلی روی این صندلی
-      const checkExisting = `
-        SELECT id, status, expires_at FROM reservations 
-        WHERE ticket_id = $1 FOR UPDATE
+      // ۳. بررسی اینکه خود این کاربر در حال حاضر رزرو معلق و پرداخت‌نشده‌ای برای این بلیط نداشته باشد
+      const checkUserPending = `
+        SELECT id FROM reservations 
+        WHERE user_id = $1 AND ticket_id = $2 AND status = 'pending' AND expires_at > NOW()
       `;
-      const existingRes = await client.query(checkExisting, [ticketId]);
-      const existing = existingRes.rows[0];
-
-      if (existing) {
-        // اگر صندلی پرداخت شده باشد یا رزرو معلق آن هنوز منقضی نشده باشد، اجازه رزرو مجدد داده نمی‌شود
-        if (existing.status === 'paid' || (existing.status === 'pending' && new Date(existing.expires_at) > new Date())) {
-          throw new Error('This ticket seat has already been reserved or purchased by another user.');
-        }
-        // اگر رزرو قبلی لغو شده یا منقضی شده باشد، رکورد قدیمی پاک می‌شود تا صندلی آزاد شده و قید یکتا نشکند
-        await client.query(`DELETE FROM reservations WHERE id = $1`, [existing.id]);
+      const pendingRes = await client.query(checkUserPending, [userId, ticketId]);
+      if (pendingRes.rows.length > 0) {
+        throw new Error('شما در حال حاضر این مسابقه را رزرو کرده‌اید؛ لطفاً از جدول پایین صفحه آن را پرداخت کنید.');
       }
 
-      // ۳. ثبت اطلاعات در جدول رزروها
+      // ۴. ثبت رزرو موقت ۱۰ دقیقه‌ای
       const insertRes = `
         INSERT INTO reservations (user_id, ticket_id, status, expires_at)
         VALUES ($1, $2, 'pending', $3)
@@ -48,9 +44,6 @@ export class ReservationRepository {
       return resVal.rows[0];
     } catch (e) {
       await client.query('ROLLBACK');
-      if (e.code === '23505') {
-        throw new Error('This ticket seat has already been reserved or purchased by another user.');
-      }
       throw e;
     } finally {
       client.release();
