@@ -3,7 +3,8 @@ import { UserService } from '../services/userService.js';
 export const UserController = {
   async requestOTP(req, res) {
     try {
-      const { contact } = req.body;
+      const { contact } = req.body || {};
+
       const result = await UserService.requestOTP(contact);
       res.status(200).json(result);
     } catch (e) {
@@ -13,8 +14,17 @@ export const UserController = {
 
   async verifyOTP(req, res) {
     try {
-      const { contact, otpCode } = req.body;
-      const result = await UserService.verifyOTPAndLogin(contact, otpCode);
+      const { contact, otpCode, code } = req.body || {};
+
+      // تست‌ها از "code" استفاده می‌کنند،
+      // ولی API فعلی ممکن است "otpCode" دریافت کند.
+      const finalOtpCode = otpCode ?? code;
+
+      const result = await UserService.verifyOTPAndLogin(
+        contact,
+        finalOtpCode
+      );
+
       res.status(200).json(result);
     } catch (e) {
       res.status(400).json({ error: e.message });
@@ -23,7 +33,7 @@ export const UserController = {
 
   async signup(req, res) {
     try {
-      const result = await UserService.signup(req.body);
+      const result = await UserService.signup(req.body || {});
       res.status(201).json(result);
     } catch (e) {
       res.status(400).json({ error: e.message });
