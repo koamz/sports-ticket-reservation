@@ -16,3 +16,5 @@ push_all.bat
 
 # Local env file (containing sensitive data)
 .env
+
+__pycache__/
