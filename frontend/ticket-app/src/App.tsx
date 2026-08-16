@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
-import SearchFilters from './components/SearchFilters';
-import TicketsGrid from './components/TicketsGrid';
-import Dashboard from './components/Dashboard';
-import AuthModal from './components/AuthModal';
+
 import { useAuth } from './hooks/useAuth';
 import { useTickets } from './hooks/useTickets';
 import { useBookings } from './hooks/useBookings';
@@ -66,30 +63,12 @@ export default function App() {
       <Hero />
 
       <main className="mx-auto max-w-6xl px-4 pb-16">
-        <SearchFilters
-          filters={filters}
-          setFilter={setFilter}
-          suggestions={suggestions}
-          onSelectSuggestion={handleSelectSuggestion}
-          onSearch={() => search()}
-        />
 
         <section className="mt-8">
           <h2 className="mb-4 text-lg font-extrabold text-ink-900">مسابقات ورزشی در دسترس</h2>
-          <TicketsGrid tickets={tickets} loading={loading} onReserve={handleReserve} />
         </section>
-
-        {isAuthenticated && (
-          <Dashboard bookings={bookings} onPay={handlePay} onCancel={handleCancel} />
-        )}
       </main>
 
-      <AuthModal
-        open={authOpen}
-        onClose={() => setAuthOpen(false)}
-        onRequestOtp={requestOtp}
-        onVerifyOtp={verifyOtp}
-      />
     </div>
   );
 }
